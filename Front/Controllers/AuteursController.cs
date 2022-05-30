@@ -75,7 +75,7 @@ namespace Front.Controllers
                 using (var request = new HttpRequestMessage(HttpMethod.Post, url))
                 {
                     var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
-
+                    
                     request.Content = stringContent;
 
                     var send = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);

@@ -9,6 +9,8 @@ using System.Web;
 using System.Web.Mvc;
 using ORM;
 using System.Net.Http;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace Front.Controllers
 {
@@ -65,15 +67,29 @@ namespace Front.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create([Bind(Include = "IdLivre,Titre,Prix,IdAuteur,Genre")] Livre livre)
         {
-            if (ModelState.IsValid)
+            string json = JsonConvert.SerializeObject(livre);
+            using (HttpClient client = new HttpClient())
             {
-                db.Livres.Add(livre);
-                await db.SaveChangesAsync();
-                return RedirectToAction("Index");
-            }
+                //au lieu d'utiliser l'ORM, on utilise l'API REST
+                string url = "https://localhost:44301/api/Livres"; // appel de l'api
 
-            ViewBag.IdAuteur = new SelectList(db.Auteurs, "IdAuteur", "Nom", livre.IdAuteur);
-            return View(livre);
+                using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+                {
+                    var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+                    request.Content = stringContent;
+
+                    var send = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+
+                    //test de succès
+                    if (!send.IsSuccessStatusCode)
+                        throw new Exception("Une erreur est survenue kors de l'appel de l'api");
+
+                    send.EnsureSuccessStatusCode();
+
+                    return RedirectToAction("Index");
+                }
+            }
         }
 
         // GET: Livres/Edit/5
